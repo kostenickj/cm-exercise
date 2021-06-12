@@ -54,6 +54,7 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
             height: 'auto'
             ,minHeight: '250px'
             ,maxWidth: '100%'
+            ,position: 'relative'
             ,borderRadius: AppTheme.spacing(2)
             , margin: AppTheme.spacing(2)
             , backgroundImage: 'url("6.jpeg")'
@@ -67,6 +68,24 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
                 maxHeight: '50px'
                 , width: 'auto'
                 , margin: AppTheme.spacing(1)
+            }
+            ,'& .bottom-wrapper': {
+                color: 'white'
+                , height: '70px'
+                , width: '100%'
+                , position: 'absolute'
+                , bottom: 0
+                , left: 0
+                , display: 'flex'
+                , justifyContent: 'space-between'
+                ,'& .name-box': {
+                    height: '70px'
+                }
+                ,'& .expire-box': {
+                    height: '70px'
+                    , width: '70px'
+                    , marginRight: AppTheme.spacing(4)
+                }
             }
         }
     };
@@ -185,7 +204,6 @@ class Home extends Component<IHomeProps>
         },1);
     };
 
-
     render(): JSX.Element
     {
 
@@ -207,6 +225,18 @@ class Home extends Component<IHomeProps>
                                 <Grid className={cls!.cardWrapper} item xs={12}>
                                     <img className='visa' src={Visa}/>
                                     <img className='chip' src={Chip}/>
+                                    <div className='bottom-wrapper'>
+                                        <div className='expire-box'></div>
+                                        <div className='expire-box'>
+                                            <Typography style={{ display: 'block' }} variant='caption'>
+                                            Expires
+                                            </Typography>
+                                            <span>{this.context.COMP_CCInfo.ExpireMonth}</span>
+                                        /
+                                            <span>{this.context.COMP_CCInfo.ExpireYear}</span>
+                                        </div>
+
+                                    </div>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth variant='outlined'>
