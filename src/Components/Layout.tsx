@@ -84,7 +84,7 @@ const AppLayoutObs = observer(
                     </Head>
                     <Container maxWidth={'xl'} id='app-main-content' className={clsx(MainClasses)}>
                         <Grid container>
-                            <Grid item xs={12} style={{ display: 'flex' }}>
+                            <Grid item xs={12} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 {this.props.children}
                             </Grid>
                         </Grid>

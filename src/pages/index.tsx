@@ -13,12 +13,14 @@ import {
     Button,
     OutlinedInput
 } from '@material-ui/core';
-import { ChangeEventHandler, Component, PureComponent } from 'react';
+import { ChangeEventHandler, Component, createRef, PureComponent, Ref, RefObject } from 'react';
 import { CssPropsRecursive, FClientUtil, IBaseComponentProps } from '../Common/Common';
 import { observer } from 'mobx-react';
 import { AppRootStoreContext } from '../Store/Root.Store';
 import { SelectInputProps } from '@material-ui/core/Select/SelectInput';
 import MaskedInput from 'react-text-mask';
+import Visa from '../Assets/visa.png';
+import Chip from '../Assets/chip.png';
 
 const styles = (AppTheme: Theme): CssPropsRecursive =>
 {
@@ -47,6 +49,25 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
         , expireLabelWrapper: {
             paddingBottom: '0 !important'
             ,paddingTop: '0 !important'
+        }
+        , cardWrapper: {
+            height: 'auto'
+            ,minHeight: '250px'
+            ,maxWidth: '100%'
+            ,borderRadius: AppTheme.spacing(2)
+            , margin: AppTheme.spacing(2)
+            , backgroundImage: 'url("6.jpeg")'
+            , '& .visa': {
+                maxHeight: '50px'
+                , width: 'auto'
+                , float: 'right'
+                , margin: AppTheme.spacing(1)
+            }
+            , '& .chip': {
+                maxHeight: '50px'
+                , width: 'auto'
+                , margin: AppTheme.spacing(1)
+            }
         }
     };
 };
@@ -98,6 +119,8 @@ class Home extends Component<IHomeProps>
     private ExpirationYears: number[];
     private ExpirationMonths: string[];
 
+    private PaperRef!: RefObject<typeof Paper>;
+
     constructor(props: any)
     {
         super(props);
@@ -110,6 +133,7 @@ class Home extends Component<IHomeProps>
         {
             this.ExpirationYears.push(Year);
         }
+        this.PaperRef = createRef();
     }
 
     componentDidMount(): void
@@ -161,6 +185,7 @@ class Home extends Component<IHomeProps>
         },1);
     };
 
+
     render(): JSX.Element
     {
 
@@ -170,10 +195,19 @@ class Home extends Component<IHomeProps>
 
         return (
             <>
+
                 <Grid item xs={12} className={cls!.pageRoot}>
-                    <Paper elevation={3}>
+
+                    <Paper style={{
+                        height: 'auto !important'
+                    }} elevation={3}>
+
                         <form noValidate autoComplete="off" className={cls!.form}>
                             <Grid container spacing={4}>
+                                <Grid className={cls!.cardWrapper} item xs={12}>
+                                    <img className='visa' src={Visa}/>
+                                    <img className='chip' src={Chip}/>
+                                </Grid>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth variant='outlined'>
                                         <InputLabel
