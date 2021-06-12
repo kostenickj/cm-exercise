@@ -10,13 +10,15 @@ import {
     Select,
     InputLabel,
     MenuItem,
-    Button
+    Button,
+    OutlinedInput
 } from '@material-ui/core';
-import Link from 'next/link';
-import { Component } from 'react';
-import { CssPropsRecursive, IBaseComponentProps } from '../Common/Common';
+import { ChangeEventHandler, Component, PureComponent } from 'react';
+import { CssPropsRecursive, FClientUtil, IBaseComponentProps } from '../Common/Common';
 import { observer } from 'mobx-react';
 import { AppRootStoreContext } from '../Store/Root.Store';
+import { SelectInputProps } from '@material-ui/core/Select/SelectInput';
+import MaskedInput from 'react-text-mask';
 
 const styles = (AppTheme: Theme): CssPropsRecursive =>
 {
@@ -49,14 +51,47 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
     };
 };
 
+const TextMaskCreditCard = (props: any) =>
+{
+    const { inputRef, ...other } = props;
+
+    return (
+        <MaskedInput
+            {...other}
+            ref={(ref) =>
+            {
+                inputRef(ref ? ref.inputElement : null);
+            }}
+            mask={[/\d/, /\d/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/, ' ', /\d/, /\d/, /\d/, /\d/]}
+            placeholderChar={'\u2000'}
+            showMask
+        />
+    );
+};
+
+const TextMaskCCV = (props: any) =>
+{
+    const { inputRef, ...other } = props;
+
+    return (
+        <MaskedInput
+            {...other}
+            ref={(ref) =>
+            {
+                inputRef(ref ? ref.inputElement : null);
+            }}
+            mask={[/\d/, /\d/, /\d/]}
+            placeholderChar={'\u2000'}
+            showMask
+        />
+    );
+};
 
 interface IHomeProps extends IBaseComponentProps {
 }
 
 class Home extends Component<IHomeProps>
 {
-
-
     static contextType = AppRootStoreContext;
     context!: React.ContextType<typeof AppRootStoreContext>;
 
@@ -87,6 +122,44 @@ class Home extends Component<IHomeProps>
 
     }
 
+    OnCardNumChange:  ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> = (Ev) =>
+    {
+        this.context.ACT_SetCardNum(
+            FClientUtil.ReplaceAll((Ev.target.value as string || ''), ' ', '')
+        );
+    };
+
+    OnCardNameChange:  ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> = (Ev) =>
+    {
+        this.context.ACT_SetCardName((Ev.target?.value as string || '').trim());
+    };
+    OnCardExpireMonthChange: SelectInputProps['onChange'] = (Ev) =>
+    {
+        this.context.ACT_SetExpireMonth((Ev.target?.value as string || ''));
+    };
+    OnCardExpireYearChange:  SelectInputProps['onChange']  = (Ev) =>
+    {
+        this.context.ACT_SetExpireYear((Ev.target?.value as string || ''));
+    };
+    OnCardCCVChange:  ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> = (Ev) =>
+    {
+        this.context.ACT_SetCCV(
+            FClientUtil.ReplaceAll((Ev.target.value as string || ''), ' ', '').trim()
+        );
+    };
+
+    /** this is really hacky, in real life i would just make my own task mask component cuz this one sucks */
+    FixAnnoyingCursorBug = (Ev: any) =>
+    {
+        setTimeout(() =>
+        {
+            requestAnimationFrame(()=>
+            {
+                Ev.target.setSelectionRange(0, 0, 'none');
+            });
+
+        },1);
+    };
 
     render(): JSX.Element
     {
@@ -95,7 +168,6 @@ class Home extends Component<IHomeProps>
             classes: cls
         } = this.props;
 
-
         return (
             <>
                 <Grid item xs={12} className={cls!.pageRoot}>
@@ -103,10 +175,34 @@ class Home extends Component<IHomeProps>
                         <form noValidate autoComplete="off" className={cls!.form}>
                             <Grid container spacing={4}>
                                 <Grid item xs={12}>
-                                    <TextField InputLabelProps={{ shrink: true }}  fullWidth label="Card Number" variant="outlined" />
+                                    <FormControl fullWidth variant='outlined'>
+                                        <InputLabel
+                                            shrink
+                                            htmlFor="cc-input"
+                                        >
+                                            Card Number
+                                        </InputLabel>
+                                        <OutlinedInput
+                                            label={'Card Number'}
+                                            value={this.context.COMP_CCInfo.CardNum}
+                                            onChange={this.OnCardNumChange}
+                                            name="textmask"
+                                            id="cc-input"
+                                            inputComponent={TextMaskCreditCard}
+                                            fullWidth
+                                            onBlur={this.FixAnnoyingCursorBug}
+                                            onClick={this.FixAnnoyingCursorBug}
+                                        />
+                                    </FormControl>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField InputLabelProps={{ shrink: true }}  fullWidth label="Card Name" variant="outlined" />
+                                    <TextField
+                                        InputLabelProps={{ shrink: true }}
+                                        fullWidth label="Card Name"
+                                        variant="outlined"
+                                        value={this.context.COMP_CCInfo.CardName}
+                                        onChange={this.OnCardNameChange}
+                                    />
                                 </Grid>
                                 <Grid item xs={12} className={cls!.expireLabelWrapper}>
                                     <Typography variant={'caption'}>Expiration Date</Typography>
@@ -115,8 +211,8 @@ class Home extends Component<IHomeProps>
                                     <FormControl fullWidth>
                                         <InputLabel shrink>Month</InputLabel>
                                         <Select
-                                            value={''}
-                                            //   onChange={handleChange}
+                                            value={this.context.COMP_CCInfo.ExpireMonth}
+                                            onChange={this.OnCardExpireMonthChange}
                                         >
                                             {this.ExpirationMonths.map((Month) =>
                                             {
@@ -129,9 +225,8 @@ class Home extends Component<IHomeProps>
                                     <FormControl fullWidth>
                                         <InputLabel shrink>Year</InputLabel>
                                         <Select
-                                            value={''}
-                                            //   onChange={handleChange}
-                                        >
+                                            value={this.context.COMP_CCInfo.ExpireYear}
+                                            onChange={this.OnCardExpireYearChange}                                        >
                                             {this.ExpirationYears.map((Year) =>
                                             {
                                                 return <MenuItem key={Year} value={Year}>{Year}</MenuItem>;
@@ -141,17 +236,29 @@ class Home extends Component<IHomeProps>
                                 </Grid>
                                 <Grid item xs={4}>
                                     <Grid item xs={12}>
-                                        <TextField
-                                            inputProps={{ maxLength: 3 }}
-                                            InputLabelProps={{ shrink: true }}
-                                            fullWidth
-                                            label="CCV"
-                                            variant="outlined"
-                                        />
+                                        <FormControl fullWidth variant='outlined'>
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="ccv-input"
+                                            >
+                                            CCV
+                                            </InputLabel>
+                                            <OutlinedInput
+                                                label={'CCV'}
+                                                value={this.context.COMP_CCInfo.CCV}
+                                                onChange={this.OnCardCCVChange}
+                                                name="textmask-ccv"
+                                                id="ccv-input"
+                                                inputComponent={TextMaskCCV}
+                                                fullWidth
+                                                onBlur={this.FixAnnoyingCursorBug}
+                                                onClick={this.FixAnnoyingCursorBug}
+                                            />
+                                        </FormControl>
                                     </Grid>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <Button fullWidth variant="contained" color="primary">
+                                    <Button disabled={!this.context.CanSubmitCard()} fullWidth variant="contained" color="primary">
                                          Submit
                                     </Button>
                                 </Grid>
