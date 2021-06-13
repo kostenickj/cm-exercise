@@ -59,6 +59,12 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
             ,borderRadius: AppTheme.spacing(2)
             , margin: AppTheme.spacing(2)
             , backgroundImage: 'url("6.jpeg")'
+            , '& .card-label': {
+                display: 'block'
+                , textAlign: 'center'
+                , letterSpacing: '2px'
+                , fontSize: `${AppTheme.typography.fontSize-3}px !important`
+            }
             , '& .visa': {
                 maxHeight: '50px'
                 , width: 'auto'
@@ -69,6 +75,29 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
                 maxHeight: '50px'
                 , width: 'auto'
                 , margin: AppTheme.spacing(1)
+            }
+            , '& .middle-wrapper': {
+                width: '100%'
+                , position: 'absolute'
+                , bottom: '100px'
+                , left: 0
+                , height: '70px'
+                , display: 'flex'
+                , alignItems: 'flex-end'
+                , paddingLeft: AppTheme.spacing(3)
+                , paddingRight: AppTheme.spacing(3)
+                , '& .card-number': {
+                    width: '100%'
+                    , '& .ccnum-text': {
+                        color: 'white'
+                        ,[AppTheme.breakpoints.down(500)]: {
+                            letterSpacing: 0
+                            , fontSize: 14
+                        }
+                        , letterSpacing: '4px'
+                        , fontSize: 18
+                    }
+                }
             }
             ,'& .bottom-wrapper': {
                 color: 'white'
@@ -81,11 +110,28 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
                 , justifyContent: 'space-between'
                 ,'& .card-holder-box': {
                     height: '70px'
+                    , width: '100%'
+                    , marginLeft: AppTheme.spacing(3)
+                    , paddingBottom: AppTheme.spacing(2)
+                    , '& .holder-container': {
+                        display: 'flex'
+                        , flexDirection: 'column'
+                        , justifyContent: 'space-between'
+                        , padding: AppTheme.spacing(.75)
+                        , height: '100%'
+                    }
+                    , '& .holder-text': {
+                        ...AppTheme.typography.caption
+                        , width: '100%'
+                        , display: 'block'
+                        , textAlign: 'left'
+                        , fontSize: '1em'
+                    }
                 }
                 ,'& .expire-box': {
                     height: '70px'
                     , width: '70px'
-                    , marginRight: AppTheme.spacing(4)
+                    , marginRight: AppTheme.spacing(3)
                     , paddingBottom: AppTheme.spacing(2)
                     , '& .expire-outline': {
                         '&.has-value': {
@@ -187,13 +233,13 @@ class Home extends Component<IHomeProps>
     OnCardNumChange:  ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> = (Ev) =>
     {
         this.context.ACT_SetCardNum(
-            FClientUtil.ReplaceAll((Ev.target.value as string || ''), ' ', '')
+            FClientUtil.ReplaceAll((Ev.target.value as string || ''), ' ', '').trim()
         );
     };
 
     OnCardNameChange:  ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement> = (Ev) =>
     {
-        this.context.ACT_SetCardName((Ev.target?.value as string || '').trim());
+        this.context.ACT_SetCardName((Ev.target?.value as string || ''));
     };
     OnCardExpireMonthChange: SelectInputProps['onChange'] = (Ev) =>
     {
@@ -212,6 +258,7 @@ class Home extends Component<IHomeProps>
 
     /**
      * this is really hacky, in real life i would just make my own task mask component cuz this one sucks
+     * it causes its own problems
      * but i dont wanna spend all day on this
      * */
     FixAnnoyingCursorBug = (Ev: any) =>
@@ -226,6 +273,50 @@ class Home extends Component<IHomeProps>
         },1);
     };
 
+    OnCCnumberFocused = (Ev: any)=>
+    {
+        this.context.ACT_SetCCNumFocused(true);
+    };
+
+    OnCCnumberBlur = (Ev: any)=>
+    {
+        this.context.ACT_SetCCNumFocused(false);
+        this.FixAnnoyingCursorBug(Ev);
+    };
+
+    GetCCnumDisplay = (bIsFocused: boolean, CCnum: string): string =>
+    {
+        CCnum = CCnum.toString().trim();
+
+        if(CCnum.length <= 4)
+        {
+            return CCnum;
+        }
+        else if(CCnum.length > 4 && CCnum.length <= 8)
+        {
+            const Start = CCnum.toString().substr(0,4);
+            const NumLeft = CCnum.toString().length - 4;
+            const End = bIsFocused ? CCnum.slice(-NumLeft) : Array(NumLeft).fill('*').join('');
+            return `${Start}\u2000\u2000\u2000\u2000 ${End}`;
+        }
+        else if(CCnum.length > 8 && CCnum.length <= 12)
+        {
+            const Start = CCnum.toString().substr(0,4);
+            const NumLeft = CCnum.toString().length - 8;
+            const Mid = bIsFocused ? CCnum.substr(4,4) : Array(4).fill('*').join('');
+            const End = bIsFocused ? CCnum.slice(-NumLeft) : Array(NumLeft).fill('*').join('');
+            return `${Start}\u2000\u2000\u2000\u2000${Mid}\u2000\u2000\u2000\u2000 ${End}\u2000\u2000\u2000\u2000`;
+        }
+        else
+        {
+            const Start = CCnum.toString().substr(0,4);
+            const Mid1 = bIsFocused ? CCnum.substr(4,4) : Array(4).fill('*').join('');
+            const Mid2 = bIsFocused ? CCnum.substr(8,4) : Array(4).fill('*').join('');
+            const End = CCnum.toString().substr(12,4).trim();
+            return `${Start}\u2000\u2000\u2000\u2000${Mid1}\u2000\u2000\u2000\u2000${Mid2}\u2000\u2000\u2000\u2000${End}`;
+        }
+    };
+
     render(): JSX.Element
     {
 
@@ -237,9 +328,11 @@ class Home extends Component<IHomeProps>
             COMP_CCInfo: CCInfo
         } = this.context;
 
+        const CCnumberIsFocused: boolean = this.context.COMP_CCNumIsFocused;
+        const CCNumDisplay = this.GetCCnumDisplay(CCnumberIsFocused, CCInfo.CardNum);
 
         const ExpText = `${CCInfo.ExpireMonth||'MM'}/${CCInfo.ExpireYear ? CCInfo.ExpireYear.toString().slice(-2) : 'YY'}`;
-
+        const Holder = CCInfo.CardName;
 
         const ExpireOutlineClasses = {
             'expire-outline': true
@@ -259,18 +352,26 @@ class Home extends Component<IHomeProps>
                                 <Grid className={cls!.cardWrapper} item xs={12}>
                                     <img className='visa' src={Visa}/>
                                     <img className='chip' src={Chip}/>
+                                    <div className='middle-wrapper'>
+                                        <div className='card-number'>
+                                            <Typography className='ccnum-text'>{CCNumDisplay}</Typography>
+                                        </div>
+                                    </div>
                                     <div className='bottom-wrapper'>
-                                        <div className='card-holder-box'></div>
+                                        <div className='card-holder-box'>
+                                            <div className='holder-container'>
+                                                <Typography className='card-label' style={{ textAlign: 'left' }} variant='caption'>
+                                                    Card Holder
+                                                </Typography>
+                                                <Typography className='holder-text'>{Holder}</Typography>
+                                            </div>
+                                        </div>
                                         <div className='expire-box'>
                                             <div className={clsx(ExpireOutlineClasses)}>
-                                                <Typography style={{
-                                                    display: 'block'
-                                                    ,textAlign: 'center'
-                                                    ,letterSpacing: '2px'
-                                                }} variant='caption'>
+                                                <Typography className='card-label' variant='caption'>
                                                 Expires
                                                 </Typography>
-                                                <span className='exp-text'>{ExpText}</span>
+                                                <Typography className='exp-text'>{ExpText}</Typography>
                                             </div>
                                         </div>
 
@@ -292,7 +393,8 @@ class Home extends Component<IHomeProps>
                                             id="cc-input"
                                             inputComponent={TextMaskCreditCard}
                                             fullWidth
-                                            onBlur={this.FixAnnoyingCursorBug}
+                                            onFocus={this.OnCCnumberFocused}
+                                            onBlur={this.OnCCnumberBlur}
                                             onClick={this.FixAnnoyingCursorBug}
                                         />
                                     </FormControl>
@@ -300,7 +402,9 @@ class Home extends Component<IHomeProps>
                                 <Grid item xs={12}>
                                     <TextField
                                         InputLabelProps={{ shrink: true }}
-                                        fullWidth label="Card Name"
+                                        inputProps={{ maxLength: 50, type: 'text' }}
+                                        fullWidth
+                                        label="Card Name"
                                         variant="outlined"
                                         value={this.context.COMP_CCInfo.CardName}
                                         onChange={this.OnCardNameChange}
@@ -360,7 +464,7 @@ class Home extends Component<IHomeProps>
                                     </Grid>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <Button disabled={!this.context.CanSubmitCard()} fullWidth variant="contained" color="primary">
+                                    <Button onClick={this.context.SubmitCardInfo} disabled={!this.context.CanSubmitCard()} fullWidth variant="contained" color="primary">
                                          Submit
                                     </Button>
                                 </Grid>

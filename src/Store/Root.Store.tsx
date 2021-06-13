@@ -24,6 +24,9 @@ export class FRootAppStore
     private OBS_CCInfo: FCCInfo;
     public get COMP_CCInfo(){ return this.OBS_CCInfo; }
 
+    private OBS_CCNumIsFocused: boolean;
+    public get COMP_CCNumIsFocused(){ return this.OBS_CCNumIsFocused; }
+
     constructor(Args: RootStoreConstructorArgs)
     {
         if (FRootAppStore._inst)
@@ -31,7 +34,7 @@ export class FRootAppStore
             throw new Error('singleton pattern violated!');
         }
         FRootAppStore._inst = this;
-
+        this.OBS_CCNumIsFocused = false;
         this.OBS_CCInfo = {
             CardNum: ''
             , ExpireMonth: ''
@@ -44,16 +47,24 @@ export class FRootAppStore
         FRootAppStore,
         (
         //declarations only needed here for non public props
-        'OBS_CCInfo'
+        'OBS_CCInfo' | 'OBS_CCNumIsFocused'
         )>(this, {
                 OBS_CCInfo: observable
+                , OBS_CCNumIsFocused: observable
                 , COMP_CCInfo: computed
+                , COMP_CCNumIsFocused: computed
                 , ACT_SetCardNum: action
                 , ACT_SetExpireMonth: action
                 , ACT_SetExpireYear: action
                 , ACT_SetCCV: action
                 , ACT_SetCardName: action
+                , ACT_SetCCNumFocused: action
             });
+    }
+
+    public ACT_SetCCNumFocused(bFocus: boolean)
+    {
+        this.OBS_CCNumIsFocused = bFocus;
     }
 
     public ACT_SetCardNum(Val: string)
@@ -65,7 +76,7 @@ export class FRootAppStore
         this.OBS_CCInfo.CardName = Val;
     }
 
-    public CanSubmitCard(): boolean
+    public CanSubmitCard = (): boolean =>
     {
         if(this.OBS_CCInfo.CardNum?.length < 16)
         {
@@ -80,7 +91,14 @@ export class FRootAppStore
             return false;
         }
         return !!this.OBS_CCInfo.ExpireMonth && !!this.OBS_CCInfo.ExpireYear;
-    }
+    };
+
+    public SubmitCardInfo = () =>
+    {
+        // this turns it into POJO from observable
+        const Info = { ...(this.OBS_CCInfo) };
+        console.log(Info);
+    };
 
     public ACT_SetExpireMonth(Val: string)
     {
@@ -94,7 +112,6 @@ export class FRootAppStore
 
     public ACT_SetCCV(Val: string)
     {
-        console.log(Val);
         this.OBS_CCInfo.CCV = Val;
     }
 
