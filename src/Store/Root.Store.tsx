@@ -95,7 +95,7 @@ export class FRootAppStore
 
     public SubmitCardInfo = () =>
     {
-        // this turns it into POJO from observable
+        // this turns it into POJO from observable that has a ton of other stuff on it
         const Info = { ...(this.OBS_CCInfo) };
         console.log(Info);
     };
