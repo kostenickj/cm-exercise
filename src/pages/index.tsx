@@ -21,6 +21,7 @@ import { SelectInputProps } from '@material-ui/core/Select/SelectInput';
 import MaskedInput from 'react-text-mask';
 import Visa from '../Assets/visa.png';
 import Chip from '../Assets/chip.png';
+import clsx from 'clsx';
 
 const styles = (AppTheme: Theme): CssPropsRecursive =>
 {
@@ -78,13 +79,33 @@ const styles = (AppTheme: Theme): CssPropsRecursive =>
                 , left: 0
                 , display: 'flex'
                 , justifyContent: 'space-between'
-                ,'& .name-box': {
+                ,'& .card-holder-box': {
                     height: '70px'
                 }
                 ,'& .expire-box': {
                     height: '70px'
                     , width: '70px'
                     , marginRight: AppTheme.spacing(4)
+                    , paddingBottom: AppTheme.spacing(2)
+                    , '& .expire-outline': {
+                        '&.has-value': {
+                            borderStyle: 'solid'
+                            , borderColor: 'gray'
+                        }
+                        , height: '100%'
+                        , borderWidth: '1px'
+                        , borderRadius: AppTheme.spacing(1)
+                        , padding: AppTheme.spacing(.75)
+                        , display: 'flex'
+                        , flexDirection: 'column'
+                        , justifyContent: 'space-between'
+                        , '& .exp-text': {
+                            ...AppTheme.typography.caption
+                            , width: '100%'
+                            , display: 'block'
+                            , textAlign: 'center'
+                        }
+                    }
                 }
             }
         }
@@ -138,7 +159,6 @@ class Home extends Component<IHomeProps>
     private ExpirationYears: number[];
     private ExpirationMonths: string[];
 
-    private PaperRef!: RefObject<typeof Paper>;
 
     constructor(props: any)
     {
@@ -152,7 +172,6 @@ class Home extends Component<IHomeProps>
         {
             this.ExpirationYears.push(Year);
         }
-        this.PaperRef = createRef();
     }
 
     componentDidMount(): void
@@ -191,7 +210,10 @@ class Home extends Component<IHomeProps>
         );
     };
 
-    /** this is really hacky, in real life i would just make my own task mask component cuz this one sucks */
+    /**
+     * this is really hacky, in real life i would just make my own task mask component cuz this one sucks
+     * but i dont wanna spend all day on this
+     * */
     FixAnnoyingCursorBug = (Ev: any) =>
     {
         setTimeout(() =>
@@ -211,9 +233,21 @@ class Home extends Component<IHomeProps>
             classes: cls
         } = this.props;
 
+        const {
+            COMP_CCInfo: CCInfo
+        } = this.context;
+
+
+        const ExpText = `${CCInfo.ExpireMonth||'MM'}/${CCInfo.ExpireYear ? CCInfo.ExpireYear.toString().slice(-2) : 'YY'}`;
+
+
+        const ExpireOutlineClasses = {
+            'expire-outline': true
+            ,'has-value': ExpText !=='MM/YY'
+        };
+
         return (
             <>
-
                 <Grid item xs={12} className={cls!.pageRoot}>
 
                     <Paper style={{
@@ -226,14 +260,18 @@ class Home extends Component<IHomeProps>
                                     <img className='visa' src={Visa}/>
                                     <img className='chip' src={Chip}/>
                                     <div className='bottom-wrapper'>
-                                        <div className='expire-box'></div>
+                                        <div className='card-holder-box'></div>
                                         <div className='expire-box'>
-                                            <Typography style={{ display: 'block' }} variant='caption'>
-                                            Expires
-                                            </Typography>
-                                            <span>{this.context.COMP_CCInfo.ExpireMonth}</span>
-                                        /
-                                            <span>{this.context.COMP_CCInfo.ExpireYear}</span>
+                                            <div className={clsx(ExpireOutlineClasses)}>
+                                                <Typography style={{
+                                                    display: 'block'
+                                                    ,textAlign: 'center'
+                                                    ,letterSpacing: '2px'
+                                                }} variant='caption'>
+                                                Expires
+                                                </Typography>
+                                                <span className='exp-text'>{ExpText}</span>
+                                            </div>
                                         </div>
 
                                     </div>
